@@ -68,6 +68,13 @@ moveTwoLines w1 w2 base = base `moveLetters` twolines
   	line1 = Coord undefined 200 fs_name_big 1
 	line2 = Coord undefined 400 fs_name_big 1
 
+moveThreeLines :: String -> String -> String -> LayoutMod
+moveThreeLines w1 w2 w3  base = base `moveLetters` lines
+  where lines = putOnLine line1 w1 ++ putOnLine line2 w2  ++ putOnLine line3 w3
+  	line1 = Coord undefined 100 fs_name_big 1
+	line2 = Coord undefined 350 fs_name_big 1
+	line3 = Coord undefined 600 fs_name_big 1
+
 
 moveHidden :: LayoutMod
 moveHidden base = map (\(c,_) -> (c, Coord (-10) (-10) 10 1)) $ base

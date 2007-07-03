@@ -16,6 +16,7 @@ import TransMaker
 	frame    { TokFrame }
 	hidden	 { TokHidden }
 	twolines { TokTwoLines }
+	threelines { TokThreeLines }
 	flip	 { TokFlip }
 	fade	 { TokFade }
 	nix	 { TokNix }
@@ -31,9 +32,10 @@ TransList : TransList fade   { fadeTrans $1}
 	  | TransList Layout    { stdTrans $2 $1 }
 	  | Layout              { start $1 }
 
-Layout	: Word			{ moveMiddle $1 }
-	| twolines Word Word	{ moveTwoLines $2 $3 }
-	| hidden             	{ moveHidden }
+Layout	: Word		             	{ moveMiddle $1 }
+	| twolines Word Word	        { moveTwoLines $2 $3 }
+	| threelines Word Word Word	{ moveThreeLines $2 $3 $4 }
+	| hidden                        { moveHidden }
 
 Word : char S				{ [$1] }
      | char Word			{ $1:$2 }
@@ -51,6 +53,7 @@ data Token =	  TokOpen
 		| TokFrame
 		| TokHidden
 		| TokTwoLines
+		| TokThreeLines
 		| TokFlip
 		| TokFade
 		| TokNix
@@ -69,6 +72,7 @@ lexStr cs = case span isAlpha cs of
 		("frame",r)	-> TokFrame : lexer r
 		("hidden",r)	-> TokHidden : lexer r
 		("twolines",r)	-> TokTwoLines : lexer r
+		("threelines",r)-> TokThreeLines : lexer r
 		("flip",r)	-> TokFlip : lexer r
 		("fadeout",r)   -> TokFade : lexer r
 		("nix",r)       -> TokNix : lexer r
