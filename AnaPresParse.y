@@ -21,11 +21,11 @@ import TransMaker
 	fade	 { TokFade }
 	nix	 { TokNix }
 	char	 { TokChar $$ }
-	sp       { TokSp }
+	word	 { TokWord $$ }
 
 %%
 
-AnaPres : frame Word Word '{'   TransList '}' { frame $2 $3 $5 }
+AnaPres : frame Word Word '{' TransList '}' { frame $2 $3 $5 }
 
 TransList : TransList fade   { fadeTrans $1}
           | TransList flip Char Char { flipTrans $3 $4 $1 }
@@ -37,14 +37,10 @@ Layout	: Word		             	{ moveMiddle $1 }
 	| threelines Word Word Word	{ moveThreeLines $2 $3 $4 }
 	| hidden                        { moveHidden }
 
-Word : char S				{ [$1] }
-     | char Word			{ $1:$2 }
-     | nix				{ "" }
- 
-Char : char S {$1}
+Word : word                            { $1 }
+     | nix                             { "" }
 
-S : sp	 { }
-  | sp S { }
+Char : char                            { $1 }
 
 {
 
@@ -58,13 +54,15 @@ data Token =	  TokOpen
 		| TokFade
 		| TokNix
 		| TokChar Char
-		| TokSp
+		| TokWord String
 	deriving Show
 
 lexer :: String -> [Token]
 lexer []        = []
 lexer ('{':cs)  = TokOpen  : lexer cs
 lexer ('}':cs)  = TokClose : lexer cs
+lexer ('"':cs)  = case span (/='"') cs of
+		      (word,'"':cs') -> TokWord word : lexer cs'
 lexer (c:cs) | isSpace c  = lexer cs
              | isAlpha c  = lexStr (c:cs)
 
@@ -76,10 +74,11 @@ lexStr cs = case span isAlpha cs of
 		("flip",r)	-> TokFlip : lexer r
 		("fadeout",r)   -> TokFade : lexer r
 		("nix",r)       -> TokNix : lexer r
-		(s,r)           -> if all isUpper s then map TokChar s ++ [TokSp] ++ lexer r
+		(s,r)           -> if all isUpper s then TokWord s : lexer r
 		                                    else error $ "Unknown "++ s
 
-happyError = error . concatMap show
+happyError = error . unwords . map show
 
 readAnaPres file = (anapres_parse . lexer ) `liftM` readFile file
+
 }
