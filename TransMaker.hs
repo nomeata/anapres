@@ -88,8 +88,9 @@ baseLayout w1 w2 =  putOnLine line1 w1 ++ putOnLine line2 w2
 	line2 = Coord undefined 700 fs_name 1
 
 moveLetters :: LetterLayout -> LetterLayout -> LetterLayout
-moveLetters from to = newlayout 
-  where ([], newlayout) = mapAccumL movePoint to from
+moveLetters from to = if null leftover then newlayout 
+                                       else error $ "leftover "++ map fst leftover ++ " when trying to do " ++ map fst to
+  where (leftover, newlayout) = mapAccumL movePoint to from
         movePoint todo (l,c) = case lookup l todo of
   				Nothing   -> (todo, (l,c)) 
 				Just c'   -> (delete (l,c') todo, (l,c'))
