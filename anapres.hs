@@ -88,7 +88,7 @@ main = do
 		draw_trans
 		return True
 
-	flip timeoutAdd 40 $ do 
+	flip timeoutAdd 30 $ do 
 		widgetQueueDraw canvas
 		return True
 
