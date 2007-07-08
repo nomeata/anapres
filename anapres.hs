@@ -48,7 +48,7 @@ main = do
         initGUI
         window <- windowNew
         canvas <- drawingAreaNew
-        widgetSetSizeRequest window width height
+        -- widgetSetSizeRequest window width height
 
 	let draw_trans = do
 		lt <- readIORef transState 
