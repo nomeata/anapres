@@ -19,8 +19,13 @@ fs_word = 200
 -- 0.5 für halbe zeit pro zeichen
 delayLetters = 0.4
 
---                    Buchstabe x y fontsize flip-scale
-data Coord = Coord { cX :: Double, cY :: Double, cS :: Double, cF :: Double } deriving (Eq, Ord) 
+--  Buchstabe: x y fontsize flip-scale
+data Coord = Coord
+	{ cX :: Double
+	, cY :: Double
+	, cS :: Double
+	, cF :: Double
+	} deriving (Eq, Ord) 
 
 instance Show Coord where
 	show (Coord x y s f) = printf "(%.0f,%.0f,%.0f,%.0f)" x y s f 
