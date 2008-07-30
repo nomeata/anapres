@@ -4,6 +4,7 @@ module AnaPresParse where
 import Char
 import Control.Monad
 import TransMaker
+import Data.List
 }
 
 
@@ -57,28 +58,33 @@ data Token =	  TokOpen
 		| TokWord String
 	deriving Show
 
-lexer :: String -> [Token]
-lexer []        = []
-lexer ('{':cs)  = TokOpen  : lexer cs
-lexer ('}':cs)  = TokClose : lexer cs
+lexer :: String -> IO [Token]
+lexer []        = return []
+lexer ('{':cs)  = (TokOpen  :) `liftM` lexer cs
+lexer ('}':cs)  = (TokClose :) `liftM` lexer cs
 lexer ('"':cs)  = case span (/='"') cs of
-		      (word,'"':cs') -> TokWord word : lexer cs'
+		      (word,'"':cs') -> (TokWord word :) `liftM` lexer cs'
+lexer cs     | "#include \"" `isPrefixOf` cs = do
+			let (file, '"':cs') = span (/='"') (drop (length "#include \"") cs)
+			input <- readFile file
+			rest <- lexer cs'
+			return $ (map TokWord . filter (all isUpper) . words $input ) ++ rest
 lexer (c:cs) | isSpace c  = lexer cs
              | isAlpha c  = lexStr (c:cs)
 
 lexStr cs = case span isAlpha cs of 
-		("frame",r)	-> TokFrame : lexer r
-		("hidden",r)	-> TokHidden : lexer r
-		("twolines",r)	-> TokTwoLines : lexer r
-		("threelines",r)-> TokThreeLines : lexer r
-		("flip",r)	-> TokFlip : lexer r
-		("fadeout",r)   -> TokFade : lexer r
-		("nix",r)       -> TokNix : lexer r
-		(s,r)           -> if all isUpper s then TokWord s : lexer r
+		("frame",r)	-> (TokFrame :) `liftM` lexer r
+		("hidden",r)	-> (TokHidden :) `liftM` lexer r
+		("twolines",r)	-> (TokTwoLines :) `liftM` lexer r
+		("threelines",r)-> (TokThreeLines :) `liftM` lexer r
+		("flip",r)	-> (TokFlip :) `liftM` lexer r
+		("fadeout",r)   -> (TokFade :) `liftM` lexer r
+		("nix",r)       -> (TokNix :) `liftM` lexer r
+		(s,r)           -> if all isUpper s then (TokWord s :) `liftM` lexer r
 		                                    else error $ "Unknown "++ s
 
 happyError = error . unwords . map show
 
-readAnaPres file = (anapres_parse . lexer ) `liftM` readFile file
+readAnaPres file = anapres_parse `liftM` (lexer =<< readFile file)
 
 }
