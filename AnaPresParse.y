@@ -68,9 +68,12 @@ lexer cs     | "#include \"" `isPrefixOf` cs = do
 			let (file, '"':cs') = span (/='"') (drop (length "#include \"") cs)
 			input <- readFile file
 			rest <- lexer cs'
-			return $ (map TokWord . filter (all isUpper) . words $input ) ++ rest
+			return $ readInclude input ++ rest
 lexer (c:cs) | isSpace c  = lexer cs
              | isAlpha c  = lexStr (c:cs)
+
+readInclude :: String -> [Token]
+readInclude = map TokWord . filter (all isUpper) . words . filter (\c -> isAlpha c || isSpace c)
 
 lexStr cs = case span isAlpha cs of 
 		("frame",r)	-> (TokFrame :) `liftM` lexer r
