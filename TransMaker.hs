@@ -123,6 +123,6 @@ middle d' (l1,c1) (l2,c2) = (l,mc)
   	mc = Coord { cX = (1-d) * cX c1 + d * cX c2,
                      cY = (1-d) * cY c1 + d * cY c2,
                      cS = (1-d) * cS c1 + d * cS c2,
-		     cF = 1}
+		     cF = (1-d) * cF c1 + d * cF c2}
 	d = if d'<0 || d'>1 then error "OOB" else 0.5*(1-cos(d' * pi))
 
