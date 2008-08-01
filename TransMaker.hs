@@ -65,7 +65,8 @@ fadeTrans before base = before base ++ [\d ->  map (\(l,c) -> (l,c {cF = (1-d)})
 moveMiddle :: String -> LayoutMod
 moveMiddle word base = base `moveLetters` midline
   where midline = putOnLine midlinepoint word
-   	midlinepoint = Coord undefined 400 fs_word 1
+   	midlinepoint = Coord undefined 400 fs_word width
+	width = if length word > 10 then 0.8 else 1
 
 moveTwoLines :: String -> String -> LayoutMod
 moveTwoLines w1 w2 base = base `moveLetters` twolines
