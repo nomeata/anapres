@@ -31,6 +31,8 @@ curr (_, [],_) = empty
 curr (_,x:_,_) = x
 traces :: LetterState -> [Trace]
 traces (_, _, t) = t
+addTrace :: Trace -> LetterState -> LetterState
+addTrace t (ys,xs,ts) = (ys, xs, t:ts)
 
 type Direction = Double -> Double
 fwd :: Direction
@@ -61,6 +63,8 @@ main = do
 		  	now <- getClockTime
 		  	let s = mic_sec_gone time now
 			if s > transtime then do
+				let imp = filter (cI.snd) $ curr state 1
+				modifyIORef currentConfig (addTrace (now,imp))
 				writeIORef transState Nothing
 				render canvas $ drawC $ curr state 1
 			  else  let d = fromIntegral s / fromIntegral transtime
