@@ -33,8 +33,9 @@ instance Show Coord where
 	show (Coord x y s f _ _) = printf "(%.0f,%.0f,%.0f,%.0f)" x y s f 
 
 type Trans = Double -> LetterLayout
+type Trace = (ClockTime, LetterLayout)
 type LetterLayout = [ (Char, Coord ) ]
-type LetterState = ( [Trans], [Trans] )
+type LetterState = ( [Trans], [Trans], [Trace] )
 type TransState = (ClockTime, Trans)
 
 type TransListHead = LetterLayout -> [Trans]

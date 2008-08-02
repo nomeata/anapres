@@ -19,16 +19,18 @@ transtime = 1500
 empty :: Trans
 empty = const []
 initState :: [Trans] -> LetterState
-initState xs = ([],xs)
+initState xs = ([],xs,[])
 next :: LetterState -> LetterState
-next (ys,[])   = (ys,[])
-next (ys,x:xs) = (x:ys,xs)
+next (ys,[],t)   = (ys,[],t)
+next (ys,x:xs,t) = (x:ys,xs,t)
 back :: LetterState -> LetterState
-back ([],xs)   = ([],xs)
-back (y:ys,xs) = (ys,y:xs)
+back ([],xs,t)   = ([],xs,t)
+back (y:ys,xs,t) = (ys,y:xs,t)
 curr :: LetterState -> Trans
-curr (_, []) = empty
-curr (_,x:_) = x
+curr (_, [],_) = empty
+curr (_,x:_,_) = x
+traces :: LetterState -> [Trace]
+traces (_, _, t) = t
 
 type Direction = Double -> Double
 fwd :: Direction
@@ -54,14 +56,15 @@ main = do
 		lt <- readIORef transState 
 		state <- readIORef currentConfig
 		case lt of 
-		    Nothing ->	render canvas $ curr state 1
+		    Nothing ->	render canvas $ drawC $ curr state 1
 		    Just (time, trans) -> do
 		  	now <- getClockTime
 		  	let s = mic_sec_gone time now
 			if s > transtime then do
 				writeIORef transState Nothing
-				render canvas $ curr state $ 1
-			  else  render canvas $ trans $ fromIntegral s / fromIntegral transtime
+				render canvas $ drawC $ curr state 1
+			  else  let d = fromIntegral s / fromIntegral transtime
+			        in render canvas $ drawC $ trans d
 
         onButtonPress window $ \e -> do
 		let but = eventButton e
@@ -97,17 +100,18 @@ main = do
         widgetShowAll window
         mainGUI
 
-render canvas config = do
+render canvas r = do
         win <- widgetGetDrawWindow canvas
         (w, h) <- widgetGetSize canvas
 	let sx = fromIntegral w / width
 	let sy = fromIntegral h / height
-        renderWithDrawable win $ renderC sx sy config
+        renderWithDrawable win $ do
+		drawbg 
+		selectFontFace "Mono" FontSlantNormal FontWeightNormal
+		scale sx sy
+		r
 
-renderC sx sy config = do
-	scale sx sy
-        selectFontFace "Mono" FontSlantNormal FontWeightNormal
-        drawbg 
+drawC config = do
 	mapM_ drawLetter config
 
 drawLetter (l, c) = do
