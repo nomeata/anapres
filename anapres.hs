@@ -116,7 +116,7 @@ drawLetter (l, c) = do
 		setFontSize (cS c)
 		TextExtents _ _ w h _ _ <- textExtents [l]
 		translate (cX c) (cY c)
-		scale (cF c) 1
+		scale (min (cF c) (cMW c/w)) 1
 		moveTo (-w/2) (h/2)
 		showText [l]
 		restore

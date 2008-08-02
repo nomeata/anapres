@@ -67,7 +67,7 @@ moveMiddle :: String -> LayoutMod
 moveMiddle word base = base `moveLetters` midline
   where midline = putOnLine midlinepoint word
    	midlinepoint = Coord undefined 400 fs_word 1 maxWidth 
-	maxWidth = width / (genericLength word)
+	maxWidth = width / (1.2 * genericLength word)
 
 moveTwoLines :: String -> String -> LayoutMod
 moveTwoLines w1 w2 base = base `moveLetters` twolines
