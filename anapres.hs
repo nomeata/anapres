@@ -14,6 +14,7 @@ import TransMaker
 
 
 transtime = 1500
+tracetime = 10000
 
 
 empty :: Trans
@@ -57,18 +58,25 @@ main = do
 	let draw_trans = do
 		lt <- readIORef transState 
 		state <- readIORef currentConfig
+		now <- getClockTime
+		render canvas $ do
+
+		save
+        	setSourceRGB 0.6 0.6 0.6
+		mapM_ (drawT now) $ traces state
+        	restore
+
 		case lt of 
-		    Nothing ->	render canvas $ drawC $ curr state 1
+		    Nothing ->	drawC $ curr state 1
 		    Just (time, trans) -> do
-		  	now <- getClockTime
 		  	let s = mic_sec_gone time now
 			if s > transtime then do
 				let imp = filter (cI.snd) $ curr state 1
-				modifyIORef currentConfig (addTrace (now,imp))
-				writeIORef transState Nothing
-				render canvas $ drawC $ curr state 1
+				liftIO $ modifyIORef currentConfig (addTrace (now,imp))
+				liftIO $ writeIORef transState Nothing
+				drawC $ curr state 1
 			  else  let d = fromIntegral s / fromIntegral transtime
-			        in render canvas $ drawC $ trans d
+			        in drawC $ trans d
 
         onButtonPress window $ \e -> do
 		let but = eventButton e
@@ -128,6 +136,20 @@ drawLetter (l, c) = do
 		moveTo (-w/2) (h/2)
 		showText [l]
 		restore
+
+drawT now (start,letters) = do
+	let time = mic_sec_gone start now
+	when (time < tracetime) $ do
+	mapM_ (drawLetter . traceAway (fromIntegral time/fromIntegral tracetime)) letters
+
+traceAway :: Double -> (Char, Coord) -> (Char, Coord)
+traceAway d (l,c) = (l, c
+		{ cY = cY c - d * height
+		, cX = width/2 + (1-d) * (cX c - width/2)
+		, cS = (1-d) * cS c
+		, cMW = (1-d) * cMW c
+		})
+	
 
 drawbg = do
         save
