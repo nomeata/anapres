@@ -41,7 +41,7 @@ fwd i = i
 rev :: Direction
 rev i = (1-i)
 
-mic_sec_gone (TOD s1 p1) (TOD s2 p2) = (s2 * 10^3 + p2 `div` 10^9) - (s1 * 10^3 + p1 `div` 10^9)
+mil_sec_gone (TOD s1 p1) (TOD s2 p2) = (s2 * 10^3 + p2 `div` 10^9) - (s1 * 10^3 + p1 `div` 10^9)
 
 main = do
 	[wordfile] <- getArgs
@@ -49,6 +49,8 @@ main = do
 
 	currentConfig <- newIORef (initState trans)
 	transState    <- newIORef (Nothing :: Maybe TransState)
+
+	frameRateRounter <- getFrameRateCounter
 
         initGUI
         window <- windowNew
@@ -69,7 +71,7 @@ main = do
 		case lt of 
 		    Nothing ->	drawC $ curr state 1
 		    Just (time, trans) -> do
-		  	let s = mic_sec_gone time now
+		  	let s = mil_sec_gone time now
 			if s > transtime then do
 				let imp = filter (cI.snd) $ curr state 1
 				liftIO $ modifyIORef currentConfig (addTrace (now,imp))
@@ -100,6 +102,7 @@ main = do
 		return True
         onDestroy window mainQuit
         onExpose canvas $ const $ do
+		frameRateRounter
 		draw_trans
 		return True
 
@@ -138,7 +141,7 @@ drawLetter (l, c) = do
 		restore
 
 drawT now (start,letters) = do
-	let time = mic_sec_gone start now
+	let time = mil_sec_gone start now
 	when (time < tracetime) $ do
 	mapM_ (drawLetter . traceAway (fromIntegral time/fromIntegral tracetime)) letters
 
@@ -150,10 +153,19 @@ traceAway d (l,c) = (l, c
 		, cMW = (1-d) * cMW c
 		})
 	
-
 drawbg = do
         save
         setSourceRGB 1 1 1
         paint
 	restore
+
+getFrameRateCounter :: IO (IO ())
+getFrameRateCounter = do
+	now <- getClockTime
+	lastRef <- newIORef now
+	return $ do
+		now <- getClockTime
+		last <- readIORef lastRef
+		putStrLn $ "Framerate: " ++ show (1000 / fromIntegral (mil_sec_gone last now))
+		writeIORef lastRef now
 
