@@ -102,7 +102,7 @@ main = do
 		return True
         onDestroy window mainQuit
         onExpose canvas $ const $ do
-		frameRateRounter
+		--frameRateRounter
 		draw_trans
 		return True
 
