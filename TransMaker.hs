@@ -121,9 +121,11 @@ spaceout width f list = map (\(c,n) -> f c ((0.5 + n) * d) ) $ zip list [0..]
 
 middle d' (l1,c1) (l2,c2) = (l,mc)
   where l = if l1 == l2 then l1 else error $ "Not Same "++[l1]++","++[l2]
-  	mc = Coord { cX = (1-d) * cX c1 + d * cX c2,
-                     cY = (1-d) * cY c1 + d * cY c2,
+  	mc = Coord { cX = cX c1 + d * dx,
+                     cY = cY c1 + d * dy,
                      cS = (1-d) * cS c1 + d * cS c2,
 		     cF = (1-d) * cF c1 + d * cF c2}
 	d = if d'<0 || d'>1 then error "OOB" else 0.5*(1-cos(d' * pi))
+	dx = cX c2 - cX c1
+	dy = cY c2 - cY c1
 
