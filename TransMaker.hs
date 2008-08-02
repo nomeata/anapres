@@ -19,16 +19,17 @@ fs_word = 200
 -- 0.5 für halbe zeit pro zeichen
 delayLetters = 0.4
 
---  Buchstabe: x y fontsize flip-scale
+--  Buchstabe: x y fontsize flip-scale max-width
 data Coord = Coord
 	{ cX :: Double
 	, cY :: Double
 	, cS :: Double
 	, cF :: Double
+	, cMW :: Double
 	} deriving (Eq, Ord) 
 
 instance Show Coord where
-	show (Coord x y s f) = printf "(%.0f,%.0f,%.0f,%.0f)" x y s f 
+	show (Coord x y s f _) = printf "(%.0f,%.0f,%.0f,%.0f)" x y s f 
 
 type Trans = Double -> LetterLayout
 type LetterLayout = [ (Char, Coord ) ]
@@ -65,33 +66,33 @@ fadeTrans before base = before base ++ [\d ->  map (\(l,c) -> (l,c {cF = (1-d)})
 moveMiddle :: String -> LayoutMod
 moveMiddle word base = base `moveLetters` midline
   where midline = putOnLine midlinepoint word
-   	midlinepoint = Coord undefined 400 fs_word width
-	width = if length word > 10 then 0.8 else 1
+   	midlinepoint = Coord undefined 400 fs_word 1 maxWidth 
+	maxWidth = width / (genericLength word)
 
 moveTwoLines :: String -> String -> LayoutMod
 moveTwoLines w1 w2 base = base `moveLetters` twolines
   where twolines = putOnLine line1 w1 ++ putOnLine line2 w2 
-  	line1 = Coord undefined 200 fs_name_big 1
-	line2 = Coord undefined 400 fs_name_big 1
+  	line1 = Coord undefined 200 fs_name_big 1 width
+	line2 = Coord undefined 400 fs_name_big 1 width
 
 moveThreeLines :: String -> String -> String -> LayoutMod
 moveThreeLines w1 w2 w3  base = base `moveLetters` lines
   where lines = putOnLine line1 w1 ++ putOnLine line2 w2  ++ putOnLine line3 w3
-  	line1 = Coord undefined 100 fs_name_big 1
-	line2 = Coord undefined 350 fs_name_big 1
-	line3 = Coord undefined 600 fs_name_big 1
+  	line1 = Coord undefined 100 fs_name_big 1 width
+	line2 = Coord undefined 350 fs_name_big 1 width
+	line3 = Coord undefined 600 fs_name_big 1 width
 
 
 moveHidden :: LayoutMod
-moveHidden base = map (\(c,_) -> (c, Coord (-10) (-10) 10 1)) $ base
+moveHidden base = map (\(c,_) -> (c, Coord (-10) (-10) 10 1 width)) $ base
 
 
 {- Layout Generation -}
 
 baseLayout :: String -> String -> LetterLayout
 baseLayout w1 w2 =  putOnLine line1 w1 ++ putOnLine line2 w2 
-  where line1 = Coord undefined 30 fs_name 1
-	line2 = Coord undefined 700 fs_name 1
+  where line1 = Coord undefined 30 fs_name 1 width
+	line2 = Coord undefined 700 fs_name 1 width
 
 moveLetters :: LetterLayout -> LetterLayout -> LetterLayout
 moveLetters from to = if null leftover then newlayout 
@@ -123,10 +124,12 @@ middle d' (l1,c1) (l2,c2) = (l,mc)
   where l = if l1 == l2 then l1 else error $ "Not Same "++[l1]++","++[l2]
   	mc = Coord { cX = cX c1 + d * dx - sideStep * dy,
                      cY = cY c1 + d * dy + sideStep * dx,
-                     cS = (1-d) * cS c1 + d * cS c2,
-		     cF = (1-d) * cF c1 + d * cF c2}
+                     cS = linear cS,
+		     cF = linear cF,
+		     cMW = linear cMW}
 	d = if d'<0 || d'>1 then error "OOB" else 0.5*(1-cos(d' * pi))
 	dx = cX c2 - cX c1
 	dy = cY c2 - cY c1
 	sideStep = d * (d-1) -- Parabel
+	linear a = (1-d) * a c1 + d * a c2
 
