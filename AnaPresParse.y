@@ -73,7 +73,8 @@ lexer (c:cs) | isSpace c  = lexer cs
              | isAlpha c  = lexStr (c:cs)
 
 readInclude :: String -> [Token]
-readInclude = map TokWord . filter (all isUpper) . words . filter (\c -> isAlpha c || isSpace c)
+readInclude = map TokWord . filter (all ok) . words . filter (\c -> isAlpha c || isSpace c || c == '_')
+  where ok c = isUpper c || c == '_'
 
 lexStr cs = case span isAlpha cs of 
 		("frame",r)	-> (TokFrame :) `liftM` lexer r

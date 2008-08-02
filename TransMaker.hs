@@ -117,7 +117,8 @@ morph config1 config2 d = config2  `moveLetters` unsorted
 	  where st  = n * (1-delayLetters)/l 
 
 {- Utils -}
-putOnLine template word =  spaceout width (\c x -> (c, template {cX = x})) word
+putOnLine template word = filter (\(c,_) -> not (c=='_')) $ 
+                          spaceout width (\c x -> (c, template {cX = x})) word
 
 spaceout width f list = map (\(c,n) -> f c ((0.5 + n) * d) ) $ zip list [0..]
   where	d = width / fromIntegral (length list)
