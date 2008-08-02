@@ -12,6 +12,8 @@ import System.Time
 import AnaPresParse
 import TransMaker
 
+type LetterState = ( [Trans], [Trans], [Trace], Int )
+
 
 transtime = 1500
 tracetime = 10000
@@ -20,20 +22,24 @@ tracetime = 10000
 empty :: Trans
 empty = const []
 initState :: [Trans] -> LetterState
-initState xs = ([],xs,[])
+initState xs = ([],xs,[],0)
 next :: LetterState -> LetterState
-next (ys,[],t)   = (ys,[],t)
-next (ys,x:xs,t) = (x:ys,xs,t)
+next (ys,[],t,n)   = (ys,[],t,n)
+next (ys,x:xs,t,n) = (x:ys,xs,t,n)
 back :: LetterState -> LetterState
-back ([],xs,t)   = ([],xs,t)
-back (y:ys,xs,t) = (ys,y:xs,t)
+back ([],xs,t,n)   = ([],xs,t,n)
+back (y:ys,xs,t,n) = (ys,y:xs,t,n)
 curr :: LetterState -> Trans
-curr (_, [],_) = empty
-curr (_,x:_,_) = x
+curr (_, [],_, _) = empty
+curr (_,x:_,_, _) = x
 traces :: LetterState -> [Trace]
-traces (_, _, t) = t
+traces (_, _, t, _) = t
 addTrace :: Trace -> LetterState -> LetterState
-addTrace t (ys,xs,ts) = (ys, xs, t:ts)
+addTrace t (ys,xs,ts,n) = (ys, xs, t:ts, n)
+skips :: LetterState -> Int
+skips (_, _, _, n) = n
+modSkips :: (Int -> Int) -> LetterState -> LetterState
+modSkips f (ys, xs, ts, n) = (ys, xs, ts, f n)
 
 type Direction = Double -> Double
 fwd :: Direction
@@ -73,10 +79,21 @@ main = do
 		    Just (time, trans) -> do
 		  	let s = mil_sec_gone time now
 			if s > transtime then do
-				let imp = filter (cI.snd) $ curr state 1
-				liftIO $ modifyIORef currentConfig (addTrace (now,imp))
-				liftIO $ writeIORef transState Nothing
-				drawC $ curr state 1
+				if skips state > 0
+				  then do
+					drawC $ curr state 1
+					liftIO $ do
+						let imp = filter (cI.snd) $ curr state 1
+						modifyIORef currentConfig (addTrace (now,imp))
+						modifyIORef currentConfig next
+						modifyIORef currentConfig (modSkips (subtract 1))
+						state <- readIORef currentConfig
+						writeIORef transState (Just (now, curr state))
+				  else do
+					let imp = filter (cI.snd) $ curr state 1
+					liftIO $ modifyIORef currentConfig (addTrace (now,imp))
+					liftIO $ writeIORef transState Nothing
+					drawC $ curr state 1
 			  else  let d = fromIntegral s / fromIntegral transtime
 			        in drawC $ trans d
 
@@ -87,11 +104,13 @@ main = do
 			case but of
 			    LeftButton -> do
 				modifyIORef currentConfig next
+				modifyIORef currentConfig (modSkips (const 0))
 				state <- readIORef currentConfig
 				writeIORef transState (Just (now, curr state))
 			    RightButton -> do
 				state <- readIORef currentConfig
 				modifyIORef currentConfig back
+				modifyIORef currentConfig (modSkips (const 0))
 				writeIORef transState (Just (now, curr state . rev))
 
 			widgetQueueDraw canvas
@@ -99,6 +118,17 @@ main = do
 
         onKeyPress window $ \e -> do
 		when (eventKeyName e `elem` words "Escape q Q") $ widgetDestroy window
+		when (eventKeyName e == "space") $ do
+			lt <- readIORef transState 
+			case lt of
+			    Nothing -> do
+				now <- getClockTime
+				modifyIORef currentConfig next
+				modifyIORef currentConfig (modSkips (const 0))
+				state <- readIORef currentConfig
+				writeIORef transState (Just (now, curr state))
+		            Just _ -> do
+				modifyIORef currentConfig (modSkips (+1))
 		return True
         onDestroy window mainQuit
         onExpose canvas $ const $ do

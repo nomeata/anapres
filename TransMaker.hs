@@ -35,7 +35,6 @@ instance Show Coord where
 type Trans = Double -> LetterLayout
 type Trace = (ClockTime, LetterLayout)
 type LetterLayout = [ (Char, Coord ) ]
-type LetterState = ( [Trans], [Trans], [Trace] )
 type TransState = (ClockTime, Trans)
 
 type TransListHead = LetterLayout -> [Trans]
