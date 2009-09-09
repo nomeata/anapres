@@ -1,5 +1,6 @@
 import Graphics.UI.Gtk
 import Graphics.Rendering.Cairo 
+import Graphics.UI.Gtk.Gdk.Events
 import Text.Printf
 import Data.IORef
 import Control.Monad
