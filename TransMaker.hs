@@ -10,8 +10,8 @@ width = 1024
 height :: Num a => a
 height = 768 
 
-fs_name = 60
-fs_name_big = 180
+fs_name = 70
+fs_name_big = 130
 fs_word = 200
 
 
