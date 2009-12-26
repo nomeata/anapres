@@ -84,6 +84,8 @@ lexStr cs = case span isAlpha cs of
 		("flip",r)	-> (TokFlip :) `liftM` lexer r
 		("fadeout",r)   -> (TokFade :) `liftM` lexer r
 		("nix",r)       -> (TokNix :) `liftM` lexer r
+		([c],r)         -> if isUpper c then (TokChar c :) `liftM` lexer r
+		                                    else error $ "Unknown "++ show c
 		(s,r)           -> if all isUpper s then (TokWord s :) `liftM` lexer r
 		                                    else error $ "Unknown "++ s
 
